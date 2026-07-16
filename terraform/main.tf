@@ -31,7 +31,9 @@ resource "digitalocean_droplet" "docs" {
 
   provisioner "remote-exec" {
     inline = [
-      "cd /opt/docs && docker compose up -d",
+      "ls -la /opt/docs/",
+      "docker compose --version || docker-compose --version",
+      "cd /opt/docs && (docker compose up -d 2>/dev/null || docker-compose up -d)",
     ]
   }
 }
