@@ -35,17 +35,19 @@ Open http://localhost:3000.
 ```bash
 aws cognito-idp create-user-pool --pool-name startline-docs-prod --policies 'PasswordPolicy={MinimumLength=12,RequireUppercase=true,RequireLowercase=true,RequireNumbers=true,RequireSymbols=true}' --auto-verified-attributes email --schema Name=email,Required=true,Mutable=false
 
-aws cognito-idp create-user-pool-domain --domain docs-auth-prod --user-pool-id <pool-id>
+aws cognito-idp create-user-pool-domain --domain startline-docs --user-pool-id <pool-id>
 
-aws cognito-idp create-user-pool-client --client-name outline --user-pool-id <pool-id> --generate-secret --callback-urls '["https://docs.startlineau.com/auth/oidc.callback"]' --logout-urls '["https://docs.startlineau.com"]' --allowed-o-auth-flows authorization_code --allowed-o-auth-scopes openid email profile --supported-identity-providers COGNITO
+aws cognito-idp create-user-pool-client --client-name outline --user-pool-id <pool-id> --generate-secret --callback-urls '["https://docs.startlineau.com/auth/oidc.callback"]' --logout-urls '["https://docs.startlineau.com"]' --allowed-o-auth-flows code --allowed-o-auth-scopes openid email profile --supported-identity-providers COGNITO
 ```
 
 ### 2. Deploy droplet
 
+DO token read from AWS SM `startline/tf-bootstrap` — no prompt needed.
+
 ```bash
 cd terraform
 terraform init
-terraform apply   # prompts for DO token
+terraform apply
 ```
 
 ### 3. Secrets

@@ -1,5 +1,2 @@
-variable "do_token" {
-  description = "DigitalOcean API token"
-  type        = string
-  sensitive   = true
-}
+# All secrets read from AWS SM startline/tf-bootstrap.
+# No local variables needed.

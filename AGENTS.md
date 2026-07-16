@@ -23,7 +23,7 @@ aws cognito-idp create-user-pool-client ...
 # Bootstrap secrets
 ./setup.sh
 
-# Deploy droplet
+# Deploy droplet (reads DO token from AWS SM startline/tf-bootstrap)
 cd terraform && terraform apply
 
 # On droplet
