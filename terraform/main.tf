@@ -1,3 +1,7 @@
+locals {
+  repo_path = abspath("${path.module}/..")
+}
+
 resource "digitalocean_droplet" "docs" {
   image      = "docker-20-04"
   name       = "startline-docs"
@@ -14,8 +18,14 @@ resource "digitalocean_droplet" "docs" {
     timeout  = "10m"
   }
 
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir -p /opt/docs",
+    ]
+  }
+
   provisioner "file" {
-    source      = "${path.module}/.."
+    source      = local.repo_path
     destination = "/opt/docs"
   }
 
