@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "outline": {
+      "type": "remote",
+      "url": "https://docs.startlineau.com/mcp",
+      "headers": { "Authorization": "Bearer {env:OUTLINE_API_TOKEN}" }
+    }
+  }
+}
