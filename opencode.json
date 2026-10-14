@@ -4,6 +4,7 @@
     "outline": {
       "type": "remote",
       "url": "https://docs.startlineau.com/mcp",
+      "oauth": false,
       "headers": { "Authorization": "Bearer {env:OUTLINE_API_TOKEN}" }
     }
   }
