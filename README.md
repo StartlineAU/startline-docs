@@ -2,93 +2,62 @@
 
 Self-hosted [Outline](https://github.com/outline/outline) wiki for team documentation at `docs.startlineau.com`.
 
-## Prerequisites
+This repo holds the **app deploy config** (Docker Compose). Infrastructure (droplet,
+DNS, Cognito) lives in [`startline-infra`](https://github.com/StartlineAU/startline-infra).
 
-- Docker + Docker Compose
-- direnv
-- AWS CLI (authenticated)
-- DO CLI (`doctl`, for droplet management)
+## Repo split
 
-## Quick start (local dev)
+| Concern | Repo |
+|---|---|
+| Droplet, `docs.startlineau.com` DNS, Cognito pool/domain/client | `startline-infra` |
+| Outline app: `docker-compose.yml`, `docker.env.example` | this repo |
 
-```bash
-# Clone
-git clone git@github.com:StartlineAU/docs.git
-cd docs
+## Deploy / update the app
 
-# Bootstrap (first time only — generates secrets, creates SM entries)
-./setup.sh
-
-# Unlock env vars
-direnv allow
-
-# Start
-docker compose up
-```
-
-Open http://localhost:3000.
-
-## Production
-
-### 1. Cognito pool (one-time)
+The droplet is created by `startline-infra`. To deploy or update Outline:
 
 ```bash
-aws cognito-idp create-user-pool --pool-name startline-docs-prod --policies 'PasswordPolicy={MinimumLength=12,RequireUppercase=true,RequireLowercase=true,RequireNumbers=true,RequireSymbols=true}' --auto-verified-attributes email --schema Name=email,Required=true,Mutable=false
+# 1. Build docker.env from the startline/docs secret
+#    (or copy an existing docker.env)
 
-aws cognito-idp create-user-pool-domain --domain startline-docs --user-pool-id <pool-id>
+# 2. Ship it to the droplet
+scp docker-compose.yml docker.env root@<droplet-ip>:/opt/docs/
 
-aws cognito-idp create-user-pool-client --client-name outline --user-pool-id <pool-id> --generate-secret --callback-urls '["https://docs.startlineau.com/auth/oidc.callback"]' --logout-urls '["https://docs.startlineau.com"]' --allowed-o-auth-flows code --allowed-o-auth-scopes openid email profile --supported-identity-providers COGNITO
+# 3. Start / update
+ssh root@<droplet-ip> "cd /opt/docs && docker compose up -d"
 ```
 
-### 2. Deploy droplet
-
-DO token read from AWS SM `startline/tf-bootstrap` — no prompt needed.
+Upgrade Outline:
 
 ```bash
-cd terraform
-terraform init
-terraform apply
+ssh root@<droplet-ip> "cd /opt/docs && docker compose pull && docker compose up -d"
 ```
-
-### 3. Secrets
-
-`ssh root@<droplet-ip>`, then:
-
-```bash
-cd /opt/docs
-./setup.sh         # populate AWS SM with secrets
-direnv allow
-docker compose up -d
-```
-
-### 4. DNS
-
-Cloudflare DNS `docs.startlineau.com CNAME → droplet IP` managed in the main Startline repo terraform (`cloudflare-dns.tf`).
 
 ## Adding users
 
+Users are managed in the Cognito pool `startline-docs-prod` (see `startline-infra`):
+
 ```bash
 aws cognito-idp admin-create-user \
-  --user-pool-id <pool-id> \
+  --user-pool-id ap-southeast-2_662eICmMq \
   --username user@example.com \
   --temporary-password TempPass123! \
   --message-action SUPPRESS
 ```
 
-User signs in at `https://docs.startlineau.com` via OIDC — Outline creates their account automatically.
-
-## Upgrading
-
-```bash
-docker compose pull && docker compose up -d
-```
+User signs in at `https://docs.startlineau.com` via OIDC — Outline creates their
+account automatically.
 
 ## Architecture
 
 ```
-Cloudflare ──► DigitalOcean Droplet (SYD1, $6/mo) ──► Outline (Docker)
-                       │                                   │
-                       └── Docker Compose                   ├── PostgreSQL (Docker)
-                                                            ├── Redis (Docker)
-                                                            └── Local filesystem (uploads)
+Cloudflare ──► DigitalOcean Droplet (SYD1) ──► Outline (Docker)
+                     │                              │
+                     └── Docker Compose              ├── PostgreSQL (Docker)
+                                                      ├── Redis (Docker)
+                                                      └── Local filesystem (uploads)
+
+Auth: AWS Cognito (OIDC) · DNS/TLS: Cloudflare
 ```
+
+Secrets live in AWS Secrets Manager `startline/docs` (loaded into `docker.env`).
