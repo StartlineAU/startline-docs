@@ -42,7 +42,7 @@ aws cognito-idp admin-create-user \
   --user-pool-id ap-southeast-2_yz6f102Mk \
   --username user@example.com \
   --user-attributes Name=name,Value="Full Name" \
-  --temporary-password TempPass123! \
+  --temporary-password "$TEMP_PASSWORD" \
   --message-action SUPPRESS
 ```
 
